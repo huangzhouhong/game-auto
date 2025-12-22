@@ -56,7 +56,9 @@ class Adb:
         :return:
         """
         self.utils.set_operate('adb')
-        ret_code, retval = self.utils.run_command(['-c', 'input', 'tap', str(x), str(y)])
+
+        # 参考：https://github.com/u-wlkjyy/mumu-python-api/issues/6
+        ret_code, retval = self.utils.run_command(['-c', 'shell', 'input', 'tap', str(x), str(y)])
 
         if ret_code == 0:
             return True
