@@ -5,17 +5,29 @@ import threading
 from datetime import datetime
 from mumu.mumu import Mumu
 
+vm_index = 0
+
+
+def set_vm_index(idx):
+    global vm_index
+    vm_index = idx
+
+
+def m():
+    return Mumu().select(vm_index)
+
 
 class Task:
     def __init__(self):
         self.done = threading.Event()
+        self.abandon = False
 
     def run(self, frame, mumu) -> bool:
         pass
 
     def wait(self, timeout=None):
         task_queue.put(self)
-        self.done.wait(timeout=timeout)
+        self.abandon = not self.done.wait(timeout=timeout)
 
 
 class SaveTask(Task):
@@ -31,11 +43,24 @@ class SaveTask(Task):
         return True
 
 
+class LocateIconTask(Task):
+    def __init__(self, icon_path):
+        super().__init__()
+        self.loc = None
+        self.icon_path = icon_path
+
+    def run(self, frame, mumu) -> bool:
+        self.loc = m().auto.locateCenterOnScreen(frame, self.icon_path)
+        print(f'locate {self.icon_path} result:{self.loc}')
+        return self.loc
+
+
 task_queue = queue.Queue()
 current_task: Task = None
 
 
 def handle(frame, mumu):
+    print(mumu)
     global current_task
     if current_task:
         task = current_task
@@ -46,11 +71,16 @@ def handle(frame, mumu):
             # 队列为空
             return
 
-    if task.run(frame, mumu):
+    if task.abandon:
+        print('abandon task')
+        current_task = None
+    elif task.run(frame, mumu):
         task.done.set()
         current_task = None
     else:
         current_task = task
 
 
-Mumu().select(0).auto.create_handle(handle)
+def start_handle_frame():
+    m().auto.create_handle(handle)
+    print('mumu handler ready')

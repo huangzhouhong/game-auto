@@ -12,7 +12,7 @@ def screenshot():
         print('wait screenshot timeout')
     else:
         print([r"C:\Program Files (x86)\Adobe\Adobe Photoshop CS5\Photoshop.exe",task.path])
-        subprocess.run([r"C:\Program Files (x86)\Adobe\Adobe Photoshop CS5\Photoshop.exe",task.path])
+        subprocess.Popen([r"C:\Program Files (x86)\Adobe\Adobe Photoshop CS5\Photoshop.exe",task.path])
     return task.path
 
 
