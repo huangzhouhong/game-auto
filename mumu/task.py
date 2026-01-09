@@ -5,28 +5,21 @@ import threading
 from datetime import datetime
 from mumu.mumu import Mumu
 
-vm_index = 0
-
-
-def set_vm_index(idx):
-    global vm_index
-    vm_index = idx
-
-
-def m():
-    return Mumu().select(vm_index)
-
 
 class Task:
     def __init__(self):
         self.done = threading.Event()
         self.abandon = False
+        self.device: Device = None
+
+    def to(self, device):
+        self.device = device
 
     def run(self, frame, mumu) -> bool:
         pass
 
     def wait(self, timeout=None):
-        task_queue.put(self)
+        self.device.task_queue.put(self)
         self.abandon = not self.done.wait(timeout=timeout)
 
 
@@ -50,37 +43,39 @@ class LocateIconTask(Task):
         self.icon_path = icon_path
 
     def run(self, frame, mumu) -> bool:
-        self.loc = m().auto.locateCenterOnScreen(frame, self.icon_path)
+        self.loc = self.device.mumu().auto.locateCenterOnScreen(frame, self.icon_path)
         print(f'locate {self.icon_path} result:{self.loc}')
         return self.loc
 
 
-task_queue = queue.Queue()
-current_task: Task = None
+class Device:
+    def __init__(self, vm_index):
+        self.vm_index = vm_index
+        self.task_queue = queue.Queue()
+        self.current_task = None
+        # 开始处理帧
+        self.mumu().auto.create_handle(self.handle)
+        print(f'mumu {self.vm_index} handler ready')
 
+    def mumu(self):
+        return Mumu().select(self.vm_index)
 
-def handle(frame, mumu):
-    print(mumu)
-    global current_task
-    if current_task:
-        task = current_task
-    else:
-        try:
-            task = task_queue.get_nowait()
-        except queue.Empty:
-            # 队列为空
-            return
+    def handle(self, frame, mumu):
+        # print('frame')
+        if self.current_task:
+            task = self.current_task
+        else:
+            try:
+                task = self.task_queue.get_nowait()
+            except queue.Empty:
+                # 队列为空
+                return
 
-    if task.abandon:
-        print('abandon task')
-        current_task = None
-    elif task.run(frame, mumu):
-        task.done.set()
-        current_task = None
-    else:
-        current_task = task
-
-
-def start_handle_frame():
-    m().auto.create_handle(handle)
-    print('mumu handler ready')
+        if task.abandon:
+            print('abandon task')
+            self.current_task = None
+        elif task.run(frame, mumu):
+            task.done.set()
+            self.current_task = None
+        else:
+            self.current_task = task
