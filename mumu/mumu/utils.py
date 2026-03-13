@@ -73,6 +73,7 @@ class utils:
             else:
                 command_extend = command
 
+            print(f'execute cmd:{" ".join(command_extend)}')
             result = subprocess.run(command_extend, shell=True, check=False, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
                                     encoding='utf-8')

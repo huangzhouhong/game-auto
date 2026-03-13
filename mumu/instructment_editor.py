@@ -2,12 +2,16 @@ import subprocess
 
 import keyboard
 
-from task import SaveTask
+from task import SaveTask, Device
 
 
 def screenshot():
+    device = Device(1)  # None表示所有设置，参考select逻辑
     task = SaveTask()
-    task.wait(timeout=3)
+    device.execute_task(task)
+
+    # task = SaveTask()
+    # task.wait(timeout=3)
     if not task.path:
         print('wait screenshot timeout')
     else:

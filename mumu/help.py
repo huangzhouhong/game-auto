@@ -5,7 +5,7 @@ import time
 import keyboard
 
 from mumu.mumu import Mumu
-from task import LocateIconTask, Device
+from task import LocateIconTask, Device, ClickIconTask
 
 screen_width = 896
 screen_height = 1600
@@ -42,10 +42,16 @@ def worker(vm_index):
         click_icon(device, 'help')
         time.sleep(3)
 
+def get_icon_path(name:str):
+    return os.path.join(r'D:\mumu-auto\crop', f'{name}.png')
+
 
 if __name__ == '__main__':
     # 1-4
-    for i in range(1, 5):
-        t = threading.Thread(target=worker, args=(i,))
-        t.start()
-        time.sleep(3)
+    # for i in range(1, 5):
+    #     t = threading.Thread(target=worker, args=(i,))
+    #     t.start()
+    #     time.sleep(3)
+    device = Device(None) # None表示所有设置，参考select逻辑
+    task = ClickIconTask(get_icon_path('help'), True)
+    device.execute_task(task)
